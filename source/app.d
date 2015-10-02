@@ -3,32 +3,39 @@ import std.stdio, std.range, pegged.grammar;
 enum ConstraintPeg =
 `
 Constraint:
-	Terms			<- Term eoi
-	Term			<- Arithmetic (Comparison / "IS NULL" / "NOT IS NULL" / "IS NOT NULL") (LogicOp Term)?
-	Comparison		<  CompareOp Arithmetic
-	CompareOp		<- "<>" / "!=" / '=' / '<' / '>'
-	LogicOp			<  "AND" / "OR"
-	Arithmetic		<- Primary (ArithmeticOp Arithmetic)?
-	Primary			<  Parens / Literal / Attribute / Parameter / FuncCall
-	Parens			<- "(" (Term / Arithmetic) ")"
-	Attribute		<- Symbol '.' Symbol
-	Parameter		<- '@' Symbol
+	Root			<  Expression eoi
+	Expression		<  Equality (And / Or)*
+	Equality		<  Term Equals?
+	Equals			<  ("<>" / "!=" / "<" / ">" / "=") Expression
+	Term			<  Factor (Add / Sub)*
+	Add				<  "+" Factor
+	Sub				<  "-" Factor
+	And				<  ([Aa][Nn][Dd]) Equality
+	Or				<  ([Oo][Rr]) Equality
+	Factor			<  Primary (Mul / Div)*
+	Mul				<  "*" Primary
+	Div				<  "/" Primary
+	Primary			<  Parens / Neg / FuncCall / Constant
+	Parens			<  "(" Expression ")"
+	Neg				<  "-" Primary
 	FuncCall		<- Symbol "(" FuncArgs? ")"
-	FuncArgs		<- Arithmetic ("," Arithmetic)*
-	Symbol			<- !Keyword identifier
-	Literal			<  Number / String / "NULL"
+	FuncArgs		<  Expression (',' Expression)*
+	Constant		<  Parameter / Attribute / Number / String
+	Parameter		<  "@" Symbol
+	Attribute		<- Symbol "." Symbol
+	Number			<~ [1-9] [0-9]* ('.' [0-9]+)?
 	String			<~ "'" Char* "'"
 	Char			<- "''" / (!"'" .)
-	Number			<~ [0-9]+ ('.' [0-9]+)?
-	ArithmeticOp	<  '+' / '-' / '/' / '*'
-	Keyword			<- "TRUE" / "FALSE" / "NULL" / "IS" / "AND" / "OR"
+	Symbol			<  identifier
 `;
 
 mixin(grammar(ConstraintPeg));
 
 void main(string[] args)
 {
-	foreach(input; args[1 .. $])
+	auto inputs = args[1..$];
+
+	foreach(input; inputs)
 	{
 		writeln('='.repeat(40));
 		writeln("Input: ", input);
