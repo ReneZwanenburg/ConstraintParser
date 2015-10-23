@@ -3,6 +3,10 @@
 	"description": "A minimal D application.",
 	"copyright": "Copyright © 2015, Rene",
 	"authors": ["Rene"],
+	"stringImportPaths":
+	[
+		"grammar"
+	],
 	"dependencies": {
 		"pegged": "~>0.2.1"
 	}
