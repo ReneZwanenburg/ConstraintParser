@@ -1,49 +1,56 @@
 Constraint:
 	Root				<  Ternary eoi
 	
-	Ternary				<  MonadicBoolOperator? TernaryValue DyadicBoolOperator?
+	Ternary				<  (MonadicBoolOperator / TernaryValue) DyadicBoolOperator?
 	
-	MonadicBoolOperator	<  Not
+	MonadicBoolOperator	<  Not TernaryValue
 	DyadicBoolOperator	<  (And / Or) Ternary
 	
-	And					<~ [Aa][Nn][Dd]
-	Or					<~ [Oo][Rr]
-	Not					<~ [Nn][Oo][Tt]
-	
-	TernaryValue		<  TernaryParens / Existance / NullComparisonPred / ValueComparisonPred / InPred / LikePred / FunctionCall
+	TernaryValue		<  TernaryParens / ExistsPred / NullComparisonPred / ValueComparisonPred / InPred / LikePred / BetweenPred / FunctionCall
 	
 	TernaryParens		<  "(" Ternary ")"
-	Existance			<  Exists "(" Symbol ")"
+	ExistsPred			<  Exists "(" ConstraintQueryName ")"
 	NullComparisonPred	<  Value Is Not? Null
 	ValueComparisonPred	<  Value ComparisonOperator Value
 	InPred				<  Value Not? In '(' Literal (',' Literal)* ')'
 	LikePred			<  Value Not? Like Value
+	BetweenPred			<  Value Not? Between Value And Value
 	
-	Exists				<~ [Ee][Xx][Ii][Ss][Tt][Ss]
-	Is					<~ [Ii][Ss]
-	Null				<~ [Nn][Uu][Ll][Ll]
-	In					<~ [Ii][Nn]
-	Like				<~ [Ll][Ii][Kk][Ee]
 	ComparisonOperator	<  "<>" / "!=" /  ">=" / "<=" / "=" / "<" / ">"
+	ConstraintQueryName	<~ (!')' .)+
 	Symbol				<  identifier
 	
 	Value				<  Arithmetic / PrimaryValue
 	PrimaryValue		<  ValueParens / Formula / Parameter / FunctionCall / Attribute / RemoteAttribute / Literal
 	
-	Arithmetic			<  PrimaryValue ('+') Value
+	Arithmetic			<  PrimaryValue ArithmeticOperator Value
 	ValueParens			<  '(' Value ')'
-	Formula				<~ '@' [Ff][Oo][Rr][Mm][Uu][Ll][Aa] (!' ' .)+
-	Parameter			<- '@' Symbol
+	Formula				<~ '@' FormulaLiteral (!' ' .)+
+	Parameter			<- '@' ParameterName
 	FunctionCall		<- FunctionName '(' FunctionArgs? ')'
-	Attribute			<- Object '.' Symbol
+	Attribute			<- (Object '.')? Symbol
 	RemoteAttribute		<- RemoteNode '.' Symbol
 	Literal				<- StringLiteral / NumericLiteral
 	
+	ArithmeticOperator	<  '+' / '-' / '/' / '*' # TODO: Operator precedence
+	ParameterName		<~ (uniAlphaNum / '-' / '.' / '_')+
 	FunctionName		<- Symbol ('.' Symbol)*
 	FunctionArgs		<  Value (',' Value)*
-	Object				<~ [Oo][Bb][Jj][Ee][Cc][Tt]
 	RemoteNode			<- '[' RemoteNodeName ']'
 	RemoteNodeName		<~ (!']' .)+
 	StringLiteral		<~ "'" Char* "'"
 	Char				<- "''" / (!"'" .)
-	NumericLiteral		<- (([1-9] [0-9]*) / [0-9]) ('.' [0-9]+)?
+	NumericLiteral		<~ '-'? [0-9]+ ('.' [0-9]+)?
+	
+	# Pegged doesn't support case insensitive matching. The following definitions are a workaround to support CI keywords.
+	And					<~ [Aa][Nn][Dd]
+	Between				<~ [Bb][Ee][Tt][Ww][Ee][Ee][Nn]
+	Exists				<~ [Ee][Xx][Ii][Ss][Tt][Ss]
+	FormulaLiteral		<~ [Ff][Oo][Rr][Mm][Uu][Ll][Aa]
+	In					<~ [Ii][Nn]
+	Is					<~ [Ii][Ss]
+	Like				<~ [Ll][Ii][Kk][Ee]
+	Not					<~ [Nn][Oo][Tt]
+	Null				<~ [Nn][Uu][Ll][Ll]
+	Object				<~ [Oo][Bb][Jj][Ee][Cc][Tt]
+	Or					<~ [Oo][Rr]
